@@ -17,7 +17,6 @@ router = APIRouter(tags=["Users"])
 @router.get("/", response_model=list[schemas.UserSchema], status_code=status.HTTP_200_OK)
 def read_users(session: Session = Depends(get_db)):
     users = services.get_users(session)
-
     return users
 
 

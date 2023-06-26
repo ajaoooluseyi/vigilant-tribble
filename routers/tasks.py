@@ -1,10 +1,10 @@
 from dependencies import engine, get_db
-from models import Base, Task, User
+from models import Base, User
 import schemas
 import services
 from sqlalchemy.orm import Session
 
-from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, status
 from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -27,12 +27,7 @@ def get_user_tasks(
     current_user: User = Depends(services.get_current_active_user),
     session: Session = Depends(get_db),
 ):
-    task = session.query(Task).filter(Task.owner_id == current_user.id).all()
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User Unauthorized"
-        )
-
+    task = get_user_tasks(current_user, session)
     return task
 
 
@@ -46,16 +41,7 @@ def get_user_task_by_ID(
     current_user: User = Depends(services.get_current_active_user),
     session: Session = Depends(get_db),
 ):
-    task = (
-        session.query(Task)
-        .filter(Task.owner_id == current_user.id, Task.id == task_id)
-        .first()
-    )
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User Unauthorized or Task does not exist",
-        )
+    task = get_user_task_by_ID(task_id, current_user, session)
 
     return task
 
@@ -68,12 +54,7 @@ def create_task_for_user(
     current_user: User = Depends(services.get_current_active_user),
     session: Session = Depends(get_db),
 ):
-    db_task = Task(
-        task=task.task, description=task.description, owner_id=current_user.id
-    )
-    session.add(db_task)
-    session.commit()
-    session.refresh(db_task)
+    db_task = create_task_for_user(task, current_user, session)
     return db_task
 
 
@@ -88,22 +69,7 @@ def update_task(
     current_user: User = Depends(services.get_current_active_user),
     session: Session = Depends(get_db),
 ):
-    task_to_update = (
-        session.query(Task)
-        .filter(Task.owner_id == current_user.id, Task.id == task_id)
-        .first()
-    )
-
-    if not task_to_update:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User Unauthorized or Task does not exist",
-        )
-
-    task_to_update.task = task.task
-    task_to_update.description = task.description
-
-    session.commit()
+    task_to_update = update_task(task_id, task, current_user, session)
     return task_to_update
 
 
@@ -118,21 +84,7 @@ def mark_as_complete(
     current_user: User = Depends(services.get_current_active_user),
     session: Session = Depends(get_db),
 ):
-    task_to_update = (
-        session.query(Task)
-        .filter(Task.owner_id == current_user.id, Task.id == task_id)
-        .first()
-    )
-
-    if not task_to_update:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User Unauthorized or Task does not exist",
-        )
-
-    task_to_update.is_complete = task.is_complete
-
-    session.commit()
+    task_to_update = mark_as_complete(task_id, task, current_user, session)
     return task_to_update
 
 
@@ -142,19 +94,5 @@ def delete_task(
     current_user: User = Depends(services.get_current_active_user),
     session: Session = Depends(get_db),
 ):
-    task = (
-        session.query(Task)
-        .filter(Task.owner_id == current_user.id, Task.id == task_id)
-        .first()
-    )
-
-    if not task:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User Unauthorized or Task ID does not exist",
-        )
-
-    session.delete(task)
-    session.commit()
-    session.close()
+    task = delete_task(task_id, current_user, session)
     return {"Success": "Task deleted!"}
