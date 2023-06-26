@@ -1,4 +1,4 @@
-#vigilant-tribble
+# vigilant-tribble
 On the terminal execute the below command to create the projects' working directory and move into that directory.
 
  
