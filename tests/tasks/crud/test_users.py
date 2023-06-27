@@ -1,3 +1,4 @@
+
 def test_create_user(client):
     data = {
         "username": "testinguser",
@@ -8,3 +9,4 @@ def test_create_user(client):
     new_data = response.json()
     assert new_data["username"] == "testinguser"
     assert new_data["is_active"] == True
+
