@@ -1,7 +1,7 @@
 """Contains the DB modules"""
 
-from dependencies import Base
-from sqlalchemy import Boolean, Column, ForeignKey, Integer,  String
+from .dependencies import Base
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 

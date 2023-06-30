@@ -1,7 +1,8 @@
-from dependencies import engine, get_db
-from models import Base, User
-import schemas
-import services
+from .. dependencies import engine, get_db
+from .. models import Base, User
+from .. import schemas
+from .. import services
+
 from sqlalchemy.orm import Session
 
 from fastapi import Depends, APIRouter, status
@@ -12,7 +13,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 Base.metadata.create_all(bind=engine)
 
 router = APIRouter(tags=["Tasks"])
-
 
 
 # CRUD
@@ -94,5 +94,5 @@ def delete_task(
     current_user: User = Depends(services.get_current_active_user),
     session: Session = Depends(get_db),
 ):
-    task = delete_task(task_id, current_user, session)
+    delete_task(task_id, current_user, session)
     return {"Success": "Task deleted!"}

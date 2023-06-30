@@ -11,7 +11,6 @@ class TaskCreate(TaskBase):
     pass
 
 
-
 class TaskComplete(BaseModel):
     is_complete: bool
 

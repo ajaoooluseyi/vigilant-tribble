@@ -1,16 +1,16 @@
-from dependencies import (
+from ..dependencies import (
     engine,
     get_db,
     authenticate_user,
     access_token_expires,
     revoked_tokens,
 )
-from models import Base, User
-import schemas
-from services.users import get_password_hash, create_access_token
-from sqlalchemy.orm import Session
-from crud.users import get_user, get_users, create_user
+from ..models import Base, User
+from .. import schemas
+from ..services.users import get_password_hash, create_access_token
+from ..crud.users import get_user, get_users, create_user
 
+from sqlalchemy.orm import Session
 from fastapi import Body, Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
