@@ -1,118 +1,96 @@
-from ..models import Task, User
-from .. import schemas
-from .. import dependencies
+from src.tasks import models
+from src.exceptions import GeneralException
+from src.config import setup_logger
+from src.tasks import schemas
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException, status
 
 
-class TasksCRUD:
-    def get_user_tasks(
-        current_user: User = Depends(dependencies.get_current_active_user),
-        session: Session = Depends(dependencies.get_db),
-    ):
-        task = session.query(Task).filter(Task.owner_id == current_user.id).all()
-        if not task:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="User Unauthorized"
-            )
-        return task
+class TaskCRUD:
+    def __init__(self, session: Session) -> None:
+        self.db = session
+        self.logger = setup_logger()
 
-    def get_user_task_by_ID(
-        task_id: int,
-        current_user: User = Depends(dependencies.get_current_active_user),
-        session: Session = Depends(dependencies.get_db),
-    ):
-        task = (
-            session.query(Task)
-            .filter(Task.owner_id == current_user.id, Task.id == task_id)
-            .first()
-        )
-        if not task:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User Unauthorized or Task does not exist",
-            )
-        return task
+    def get_user_tasks(self, user_id: int):
+        return self.db.query(models.Task).filter(models.Task.owner_id == user_id).all()
 
-    def create_task_for_user(
-        task: schemas.TaskCreate,
-        current_user: User = Depends(dependencies.get_current_active_user),
-        session: Session = Depends(dependencies.get_db),
-    ):
-        db_task = Task(
-            task=task.task, description=task.description, owner_id=current_user.id
-        )
-        session.add(db_task)
-        session.commit()
-        session.refresh(db_task)
-        return db_task
-
-    def update_task(
-        task_id: int,
-        task: schemas.TaskBase,
-        current_user: User = Depends(dependencies.get_current_active_user),
-        session: Session = Depends(dependencies.get_db),
-    ):
-        task_to_update = (
-            session.query(Task)
-            .filter(Task.owner_id == current_user.id, Task.id == task_id)
+    def get_user_task_by_ID(self, user_id: int, task_id: int):
+        return (
+            self.db.query(models.Task)
+            .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
             .first()
         )
 
-        if not task_to_update:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User Unauthorized or Task does not exist",
+    def create_task_for_user(self, user_id: int, task: schemas.TaskCreate):
+        try:
+            db_task = models.Task(
+                task=task.task, description=task.description, owner_id=user_id
             )
+            self.db.add(db_task)
+            self.db.commit()
+            self.db.refresh(db_task)
+            return db_task
+        except Exception as raised_exception:
+            self.logger.exception(raised_exception)
+            self.logger.error(raised_exception)
+            raise GeneralException(str(raised_exception))
+        finally:
+            self.db.rollback()
 
-        task_to_update.task = task.task
-        task_to_update.description = task.description
-
-        session.commit()
-        return task_to_update
+    def update_task(self, task_id: int, user_id: int, task: schemas.TaskCreate):
+        try:
+            task_to_update = (
+                self.db.query(models.Task)
+                .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
+                .first()
+            )
+            setattr(task_to_update, "task", task)
+            self.db.add(task_to_update)
+            self.db.commit()
+            self.db.refresh(task_to_update)
+            return task_to_update
+        except Exception as raised_exception:
+            self.logger.exception(raised_exception)
+            self.logger.error(raised_exception)
+            raise GeneralException(str(raised_exception))
+        finally:
+            self.db.rollback()
 
     def mark_as_complete(
-        task_id: int,
+        self, task_id: int, user_id: int,
         task: schemas.TaskComplete,
-        current_user: User = Depends(dependencies.get_current_active_user),
-        session: Session = Depends(dependencies.get_db),
     ):
-        task_to_update = (
-            session.query(Task)
-            .filter(Task.owner_id == current_user.id, Task.id == task_id)
-            .first()
-        )
-
-        if not task_to_update:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User Unauthorized or Task does not exist",
+        try:
+            task_to_update = (
+                self.db.query(models.Task)
+                .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
+                .first()
             )
 
-        task_to_update.is_complete = task.is_complete
-
-        session.commit()
-
-        return task_to_update
+            setattr(task_to_update, "task", task)
+            self.db.add(task_to_update)
+            self.db.commit()
+            self.db.refresh(task_to_update)
+            return task_to_update
+        except Exception as raised_exception:
+            self.logger.exception(raised_exception)
+            self.logger.error(raised_exception)
+            raise GeneralException(str(raised_exception))
+        finally:
+            self.db.rollback()
 
     def delete_task(
-        task_id: int,
-        current_user: User = Depends(dependencies.get_current_active_user),
-        session: Session = Depends(dependencies.get_db),
+        self, task_id: int, user_id: int,
     ):
         task = (
-            session.query(Task)
-            .filter(Task.owner_id == current_user.id, Task.id == task_id)
+            self.db.query(models.Task)
+            .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
             .first()
         )
 
-        if not task:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User Unauthorized or Task ID does not exist",
-            )
+        if task is None:
+            raise GeneralException("The task does not exist.")
 
-        session.delete(task)
-        session.commit()
-        session.close()
+        self.db.delete(task)
+        self.db.commit()
+        self.db.close()
         return {"Success": "Task deleted!"}

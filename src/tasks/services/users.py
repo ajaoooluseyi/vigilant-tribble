@@ -1,33 +1,110 @@
-from datetime import timedelta, datetime
-from jose import jwt
-from passlib.context import CryptContext
+from typing import Union
 
-# JWT settings
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from sqlalchemy.orm import Session
 
-access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+from src.config import Settings, setup_logger
+from src.exceptions import (
+    GeneralException,
+)
 
-revoked_tokens = set()
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(password, hashed_password):
-    return pwd_context.verify(password, hashed_password)
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
+from src.security import verify_password
+from src.service import (
+    BaseService,
+    ServiceResult,
+    failed_service_result,
+    success_service_result,
+)
+from src.tasks import schemas
+from src.tasks.crud.users import UserCRUD
+from src.users.exceptions import DuplicateUserException, UserNotFoundException
+from src.tasks.models import User
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return token
+class UserService(BaseService):
+    def __init__(
+        self, requesting_user: schemas.UserSchema, db: Session, app_settings: Settings
+    ) -> None:
+        super().__init__(requesting_user, db)
+        self.users_crud = UserCRUD(db)
+        self.requesting_user = requesting_user
+        self.app_settings: Settings = (
+            app_settings  # add your settings to general settings or change file route
+        )
+        self.logger = setup_logger()
+
+        """if requesting_user is None:
+            raise GeneralException("Requesting User was not provided.")
+        """
+            
+    def create_user(
+        self,
+        user: schemas.UserCreate,
+    ) -> ServiceResult[Union[User, None]]:
+        db_user = self.users_crud.get_user(username=user.username)
+        if db_user:
+            return ServiceResult(
+                data=None,
+                success=False,
+                exception=DuplicateUserException(
+                    f"The username is already registered. Try another one."
+                ),
+            )
+        try:
+            created_user = self.users_crud.create_user(user)
+        except GeneralException as raised_exception:
+            return failed_service_result(raised_exception)
+        except Exception as raised_exception:
+            self.logger.exception(raised_exception)
+            return failed_service_result(raised_exception)
+
+        return ServiceResult(data=created_user, success=True)
+
+    def get_users(self, skip: int = 0, limit: int = 10) -> ServiceResult:
+        try:
+            db_users = self.users_crud.get_users(skip=skip, limit=limit)
+            total_db_users = self.users_crud.get_total_users()
+
+            users_data = {"total": total_db_users, "data": db_users}
+            return ServiceResult(data=users_data, success=True)
+        except Exception as raised_exception:
+            self.logger.exception(raised_exception)
+            return failed_service_result(raised_exception)
+
+    def get_user_by_id(self, user_id: int) -> ServiceResult[Union[User, None]]:
+        try:
+            db_user: User = self.users_crud.get_user_by_id(id=user_id)  # type: ignore
+            if not db_user:
+                return ServiceResult(
+                    data=None,
+                    success=False,
+                    exception=UserNotFoundException(f"User with ID {id} not found"),
+                )
+
+            return success_service_result(db_user)
+        except Exception as raised_exception:
+            self.logger.exception(raised_exception)
+            return failed_service_result(raised_exception)
+
+    def get_user(self, username: str) -> ServiceResult[Union[User, None]]:
+        try:
+            db_user: User = self.users_crud.get_user(username)  # type: ignore
+            if not db_user:
+                return ServiceResult(
+                    data=None,
+                    success=False,
+                    exception=UserNotFoundException(
+                        f"User with username {username} not found"
+                    ),
+                )
+            return success_service_result(db_user)
+        except Exception as raised_exception:
+            self.logger.exception(raised_exception)
+            return failed_service_result(raised_exception)
+
+    def authenticate_user(self, username: str, password: str):
+        user = self.users_crud.get_user(username)
+        if not user:
+            raise GeneralException(f"Invalid username or password")
+        if not verify_password(password, user.hashed_password):
+            raise GeneralException(f"Invalid username or password")
+        return user

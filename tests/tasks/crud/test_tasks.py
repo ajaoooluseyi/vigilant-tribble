@@ -1,9 +1,10 @@
 from src.tasks import config
-
+from src.tasks.crud.tasks import TasksCRUD
 from fastapi import status
 
 
-def test_create_task_for_user(client, token_headers):
+def test_create_task_for_user(test_db, crud_user):
+    
     data = {"task": config.settings.TEST_TASK, "description": config.settings.TEST_DESC}
     response = client.post("/user/task", json=data, headers=token_headers)
     assert response.status_code == status.HTTP_201_CREATED

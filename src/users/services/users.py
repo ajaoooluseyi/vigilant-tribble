@@ -28,7 +28,6 @@ from src.service import (
 from src.users import schemas
 from src.users.crud.users import UserCRUD
 from src.users.exceptions import DuplicateUserException, UserNotFoundException
-from src.exceptions import BaseForbiddenException
 from src.users.models import Profile, Roles, User
 from src.users.schemas import ProfileOut
 

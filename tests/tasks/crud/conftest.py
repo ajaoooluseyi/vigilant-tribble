@@ -1,74 +1,39 @@
-import os
-import sys
-from typing import Any, Generator
-
 import pytest
-from src.tasks.dependencies import get_db
-from src.tasks.models import Base, User
-from src.tasks.schemas import UserCreate
-from src.tasks.services.users import get_password_hash
-from src.tasks.crud.users import create_user, get_user
-from src.tasks import config
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from src.exceptions import GeneralException
+from src.users.crud.roles import RoleCRUD
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-# from main import app
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# this is to include the dir in sys.path so that we can import from session,main.py
-
-app = FastAPI()
+from src.users.crud.users import UserCRUD
+from src.users.models import User
+from src.users.schemas import UserCreate
 
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-# Use connect_args parameter only with sqlite
-SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base.metadata.drop_all(engine)
-
-Base.metadata.create_all(engine)
+@pytest.fixture()
+def crud_user_email():
+    return "crud_task@regnify.com"
 
 
-@pytest.fixture
-def client() -> Generator[TestClient, Any, None]:
-    """
-    Create a new FastAPI TestClient that uses the `db_session` fixture to override
-    the `get_db` dependency that is injected into routes.
-    """
-
-    def _get_test_db():
-        try:
-            db_session = SessionTesting()
-            yield db_session
-        finally:
-            db_session.close
-
-    app.dependency_overrides[get_db] = _get_test_db
-    with TestClient(app) as client:
-        yield client
+@pytest.fixture()
+def crud_user_email_2():
+    return "crud_task_2@regnify.com"
 
 
-@pytest.fixture
-def token_headers(client: TestClient):
-    test_username = config.settings.TEST_USERNAME
-    test_password = config.settings.TEST_PASS
-    db_session = SessionTesting()
-    user = get_user(username=test_username, session=db_session)
+@pytest.fixture()
+def crud_user(test_db, crud_user_email) -> User:
+    users_crud: UserCRUD = UserCRUD(db=test_db)
+    user: User = users_crud.get_user_by_email(crud_user_email)
     if not user:
-        user_create = UserCreate(username=test_username, password=test_password)
-        hashed_password = get_password_hash(user_create.password)
-        user = User(username=user_create.username, hashed_password=hashed_password)
-        user = create_user(user=user, session=db_session)
+        user: User = users_crud.create_user(
+            UserCreate(email=crud_user_email, last_name="1", first_name="2", password="3")  # type: ignore
+        )
+    return user
 
-    data = {"username": test_username, "password": test_password}
 
-    response = client.post("/login", data=data)
-    token = response.json()["access_token"]
-
-    return {"Authorization": f"Bearer {token}"}
+@pytest.fixture()
+def crud_user_2(test_db, crud_user_email_2) -> User:
+    users_crud: UserCRUD = UserCRUD(db=test_db)
+    user: User = users_crud.get_user_by_email(crud_user_email_2)
+    if not user:
+        user: User = users_crud.create_user(
+            UserCreate(email=crud_user_email_2, last_name="1", first_name="2", password="3")  # type: ignore
+        )
+    return user

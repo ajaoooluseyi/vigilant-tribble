@@ -15,7 +15,7 @@ class TaskComplete(BaseModel):
     is_complete: bool
 
 
-class TaskSchema(TaskBase):
+class TaskSchema(BaseModel):
     id: int
     task: str
     description: str = None
@@ -34,7 +34,8 @@ class UserCreate(UserBase):
     password: str
 
 
-class UserSchema(UserBase):
+class UserSchema(BaseModel):
+    username: str
     id: int
     is_active: bool
     tasks: list[TaskSchema]

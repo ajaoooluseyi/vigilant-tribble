@@ -3,6 +3,7 @@
 from .dependencies import Base
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+from src.scopes import UserScope
 
 
 class User(Base):
@@ -15,9 +16,17 @@ class User(Base):
 
     tasks = relationship("Task", back_populates="owner")
 
+    @staticmethod
+    def full_scopes() -> list[str]:
+        return [
+            UserScope.CREATE.value,
+            UserScope.READ.value,
+            UserScope.UPDATE.value,
+            UserScope.DELETE.value,
+        ]
 
-def __repr__(self):
-    return self.username
+    def __repr__(self):
+        return self.username
 
 
 class Task(Base):

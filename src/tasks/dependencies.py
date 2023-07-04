@@ -1,13 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from config import Settings
+from src.tasks.config import Settings
 from fastapi import Depends, HTTPException, status
-from . import models
+from src.tasks import models
 from jose import JWTError, jwt
-from .services import verify_password, SECRET_KEY, ALGORITHM
+from src.config import secret_key, algorithm
 from fastapi.security import OAuth2PasswordBearer
-from .crud.users import get_user
+from src.tasks.crud.users import get_user
+from datetime import timedelta, datetime
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -15,6 +16,12 @@ engine = create_engine(Settings.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+revoked_tokens = set()
 
 
 # Dependency
@@ -34,7 +41,7 @@ def get_current_user(
         detail="Could not validate credentials",
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -54,10 +61,12 @@ def get_current_active_user(current_user: models.User = Depends(get_current_user
     return current_user
 
 
-def authenticate_user(username: str, password: str, session: SessionLocal):
-    user = get_user(session, username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    token = jwt.encode(to_encode, secret_key, algorithm=algorithm)
+    return token

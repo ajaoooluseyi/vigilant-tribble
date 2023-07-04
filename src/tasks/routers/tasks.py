@@ -1,98 +1,94 @@
-from .. dependencies import engine, get_db
-from .. models import Base, User
-from .. import schemas
-from .. import services
+from fastapi import APIRouter, Security
 
-from sqlalchemy.orm import Session
+from src.config import setup_logger
+from src.scopes import UserScope
+from src.service import handle_result
+from src.tasks.services.tasks import TaskService
+from src.tasks.dependencies import get_current_active_user
+from src.tasks import schemas
 
-from fastapi import Depends, APIRouter, status
-from fastapi.security import OAuth2PasswordBearer
+router = APIRouter(tags=["Tasks"], prefix="/tasks")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-Base.metadata.create_all(bind=engine)
-
-router = APIRouter(tags=["Tasks"])
-
-
-# CRUD
+logger = setup_logger()
 
 
 @router.get(
     "/user/task",
     response_model=list[schemas.TaskSchema],
-    status_code=status.HTTP_200_OK,
 )
 def get_user_tasks(
-    current_user: User = Depends(services.get_current_active_user),
-    session: Session = Depends(get_db),
+    task_service: TaskService = Security(
+        get_current_active_user, scopes=[UserScope.READ.value]
+    ),
 ):
-    task = get_user_tasks(current_user, session)
-    return task
+    task = task_service.get_user_tasks()
+    return handle_result(task, list[schemas.TaskSchema])  # type: ignore
 
 
 @router.get(
     "/user/task/{task_id}",
     response_model=schemas.TaskSchema,
-    status_code=status.HTTP_200_OK,
 )
 def get_user_task_by_ID(
     task_id: int,
-    current_user: User = Depends(services.get_current_active_user),
-    session: Session = Depends(get_db),
+    task_service: TaskService = Security(
+        get_current_active_user, scopes=[UserScope.READ.value]
+    ),
 ):
-    task = get_user_task_by_ID(task_id, current_user, session)
-
-    return task
+    task = task_service.get_user_task_by_ID(task_id=task_id)
+    return handle_result(task, schemas.TaskSchema)  # type: ignore
 
 
 @router.post(
-    "/user/task", response_model=schemas.TaskSchema, status_code=status.HTTP_201_CREATED
+    "/user/task",
+    response_model=schemas.TaskSchema,
 )
 def create_task_for_user(
     task: schemas.TaskCreate,
-    current_user: User = Depends(services.get_current_active_user),
-    session: Session = Depends(get_db),
+    task_service: TaskService = Security(
+        get_current_active_user, scopes=[UserScope.CREATE.value]
+    ),
 ):
-    db_task = create_task_for_user(task, current_user, session)
-    return db_task
+    task = task_service.create_task_for_user(task)  # type: ignore
+    return handle_result(task, schemas.TaskSchema)  # type: ignore
 
 
 @router.put(
     "/user/task/{task_id}",
     response_model=schemas.TaskSchema,
-    status_code=status.HTTP_202_ACCEPTED,
 )
 def update_task(
     task_id: int,
-    task: schemas.TaskBase,
-    current_user: User = Depends(services.get_current_active_user),
-    session: Session = Depends(get_db),
+    task: schemas.TaskCreate,
+    task_service: TaskService = Security(
+        get_current_active_user, scopes=[UserScope.UPDATE.value]
+    ),
 ):
-    task_to_update = update_task(task_id, task, current_user, session)
-    return task_to_update
+    task = task_service.update_task(task=task, task_id=task_id)  # type: ignore
+    return handle_result(task, schemas.TaskSchema)  # type: ignore
 
 
 @router.post(
     "/user/task/{task_id}",
     response_model=schemas.TaskSchema,
-    status_code=status.HTTP_202_ACCEPTED,
 )
 def mark_as_complete(
     task_id: int,
     task: schemas.TaskComplete,
-    current_user: User = Depends(services.get_current_active_user),
-    session: Session = Depends(get_db),
+    task_service: TaskService = Security(
+        get_current_active_user, scopes=[UserScope.UPDATE.value]
+    ),
 ):
-    task_to_update = mark_as_complete(task_id, task, current_user, session)
-    return task_to_update
+    task = task_service.mark_as_complete(task_id, task)  # type: ignore
+    return handle_result(task, schemas.TaskSchema)  # type: ignore
 
 
-@router.delete("/user/task/{task_id}", status_code=status.HTTP_200_OK)
+@router.delete("/user/task/{task_id}")
 def delete_task(
     task_id: int,
-    current_user: User = Depends(services.get_current_active_user),
-    session: Session = Depends(get_db),
+    task_service: TaskService = Security(
+        get_current_active_user, scopes=[UserScope.DELETE.value]
+    ),
 ):
-    delete_task(task_id, current_user, session)
-    return {"Success": "Task deleted!"}
+    result = task_service.delete_task(task_id)
+    return handle_result(result)  # type: ignore
