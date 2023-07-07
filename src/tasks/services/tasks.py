@@ -11,6 +11,7 @@ from src.service import (
     BaseService,
     ServiceResult,
     failed_service_result,
+    success_service_result
 )
 from src.tasks import schemas
 from src.tasks.crud.tasks import TaskCRUD
@@ -41,20 +42,20 @@ class TaskService(BaseService):
                 task=taskdata.task,
                 description=taskdata.description,  # type: ignore
             )
-
+            return success_service_result(schemas.TaskOut.from_orm(new_task))
         except GeneralException as raised_exception:
             return failed_service_result(raised_exception)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
 
-        return ServiceResult(data=new_task, success=True)
+        #  return ServiceResult(data=new_task, success=True)
 
     def get_user_tasks(self):
         try:
             db_tasks = self.task_crud.get_user_tasks(user_id=self.requesting_user.id)
 
-            return ServiceResult(data=db_tasks, success=True)
+            return success_service_result(schemas.TaskOut.from_orm(db_tasks))  # return ServiceResult(data=db_tasks, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
@@ -65,18 +66,18 @@ class TaskService(BaseService):
                 user_id=self.requesting_user.id, task_id=task_id
             )
 
-            return ServiceResult(data=db_task, success=True)
+            return success_service_result(schemas.TaskOut.from_orm(db_task))  # return ServiceResult(data=db_task, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
 
-    def update_task(self, task_id: int, task: schemas.TaskCreate):
+    def update_task(self, task_id: int, task: schemas.TaskUpdate):
         try:
             db_task = self.task_crud.update_task(
-                task_id=task_id, user_id=self.requesting_user.id, task=task
+                task_id=task_id, user_id=self.requesting_user.id, task=task.task, description=task.description
             )
 
-            return ServiceResult(data=db_task, success=True)
+            return success_service_result(schemas.TaskOut.from_orm(db_task))  # return ServiceResult(data=db_task, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
@@ -91,7 +92,7 @@ class TaskService(BaseService):
                 task_id=task_id, user_id=self.requesting_user.id, task=task
             )
 
-            return ServiceResult(data=db_task, success=True)
+            return success_service_result(schemas.TaskOut.from_orm(db_task))  # return ServiceResult(data=db_task, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)

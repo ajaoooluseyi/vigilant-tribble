@@ -36,18 +36,24 @@ class TaskCRUD:
         finally:
             self.db.rollback()
 
-    def update_task(self, task_id: int, user_id: int, task: schemas.TaskCreate):
+    def update_task(self, task_id: int, user_id: int, task: str, description: str = None )-> models.Task: 
         try:
             task_to_update = (
                 self.db.query(models.Task)
                 .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
                 .first()
             )
-            setattr(task_to_update, "task", task)
+            if task:
+                setattr(task_to_update, "task", task)
+
+            if description:
+                setattr(task_to_update, "description", description)
+
             self.db.add(task_to_update)
             self.db.commit()
             self.db.refresh(task_to_update)
-            return task_to_update
+
+            return task_to_update  # type: ignore
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             self.logger.error(raised_exception)
@@ -66,7 +72,7 @@ class TaskCRUD:
                 .first()
             )
 
-            setattr(task_to_update, "task", task)
+            setattr(task_to_update, "is_complete", task.is_complete)
             self.db.add(task_to_update)
             self.db.commit()
             self.db.refresh(task_to_update)
@@ -89,8 +95,20 @@ class TaskCRUD:
 
         if task is None:
             raise GeneralException("The task does not exist.")
-
+        total_user_tasks_to_delete = (
+            self.db.query(models.Task)
+            .filter(models.Task.owner_id_id == user_id)
+            .delete()
+        )
         self.db.delete(task)
         self.db.commit()
         self.db.close()
-        return {"Success": "Task deleted!"}
+        return total_user_tasks_to_delete
+    
+    def total_tasks(self, user_id: int) -> int:  # type: ignore
+        query = self.db.query(models.Task)
+        if user_id:
+            query = query.filter(models.Task.owner_id == user_id)
+
+        return query.count()
+

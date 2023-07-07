@@ -1,74 +1,56 @@
-import os
-import sys
-from typing import Any, Generator
-
 import pytest
-from src.tasks.dependencies import get_db
-from src.tasks.models import Base, User
+
+from src.tasks.crud.users import UserCRUD
+from src.tasks.models import User
 from src.tasks.schemas import UserCreate
-from src.tasks.services.users import get_password_hash
-from src.tasks.crud.users import create_user, get_user
-from src.tasks import config
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from src.config import Settings, setup_logger
+from src.tasks.services.tasks import TaskService
+from src.tasks.services.users import UserService
 
-# from main import app
+logger = setup_logger()
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# this is to include the dir in sys.path so that we can import from session,main.py
-
-app = FastAPI()
+TEST_CACHE = {}
 
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-# Use connect_args parameter only with sqlite
-SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+@pytest.fixture()
+def user_service(test_db, test_user):
+    if "user_service" in TEST_CACHE:
+        return TEST_CACHE["user_service"]
 
-Base.metadata.drop_all(engine)
+    user_service = UserService(
+        db=test_db, requesting_user=test_user, app_settings=Settings()
+    )
 
-Base.metadata.create_all(engine)
+    TEST_CACHE["user_service"] = user_service
 
-
-@pytest.fixture
-def client() -> Generator[TestClient, Any, None]:
-    """
-    Create a new FastAPI TestClient that uses the `db_session` fixture to override
-    the `get_db` dependency that is injected into routes.
-    """
-
-    def _get_test_db():
-        try:
-            db_session = SessionTesting()
-            yield db_session
-        finally:
-            db_session.close
-
-    app.dependency_overrides[get_db] = _get_test_db
-    with TestClient(app) as client:
-        yield client
+    return user_service
 
 
-@pytest.fixture
-def token_headers(client: TestClient):
-    test_username = config.settings.TEST_USERNAME
-    test_password = config.settings.TEST_PASS
-    db_session = SessionTesting()
-    user = get_user(username=test_username, session=db_session)
-    if not user:
-        user_create = UserCreate(username=test_username, password=test_password)
-        hashed_password = get_password_hash(user_create.password)
-        user = User(username=user_create.username, hashed_password=hashed_password)
-        user = create_user(user=user, session=db_session)
+@pytest.fixture()
+def task_service(test_db, test_user):
+    if "task_service" in TEST_CACHE:
+        return TEST_CACHE["role_service"]
 
-    data = {"username": test_username, "password": test_password}
+    task_service = TaskService(
+        db=test_db, requesting_user=test_user, app_settings=Settings()
+    )
 
-    response = client.post("/login", data=data)
-    token = response.json()["access_token"]
+    TEST_CACHE["task_service"] = task_service
 
-    return {"Authorization": f"Bearer {token}"}
+    return task_service
+
+
+@pytest.fixture()
+def test_user(test_db):
+    user_under_test = "simpleUser@regnify.com"
+
+    users_crud: UserCRUD = UserCRUD(session=test_db)
+    if users_crud.get_user(user_under_test):
+        return users_crud.get_user(user_under_test)
+
+    user: User = users_crud.create_user(
+        UserCreate(username=user_under_test, password="3")  # type: ignore
+    )
+    assert user.username == user_under_test
+    return user

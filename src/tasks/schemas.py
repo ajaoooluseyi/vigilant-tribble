@@ -11,6 +11,10 @@ class TaskCreate(TaskBase):
     pass
 
 
+class TaskUpdate(TaskBase):
+    pass
+
+
 class TaskComplete(BaseModel):
     is_complete: bool
 
@@ -24,6 +28,10 @@ class TaskSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class TaskOut(TaskSchema):
+    pass
 
 
 class UserBase(BaseModel):
