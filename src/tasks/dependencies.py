@@ -7,7 +7,7 @@ from src.tasks import models
 from jose import JWTError, jwt
 from src.config import secret_key, algorithm
 from fastapi.security import OAuth2PasswordBearer
-from src.tasks.crud.users import get_user
+from src.users.crud.users import get_user_for_task
 from datetime import timedelta, datetime
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -47,7 +47,7 @@ def get_current_user(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = get_user(session=session, username=username)
+    user = get_user_for_task(session=session, username=username)
     if user is None:
         raise credentials_exception
     return user
