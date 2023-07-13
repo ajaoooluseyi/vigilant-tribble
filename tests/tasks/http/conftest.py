@@ -1,7 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
+
 from src.main import app
+from src.tasks.crud.users import UserCRUD
+from src.tasks.schemas import UserCreate
 from src.tasks.crud.users import UserCRUD
 from src.tasks.schemas import UserCreate
 
@@ -35,10 +38,14 @@ def login_test(
 def signup_test(
     client: TestClient, username: str, password: str, response_code: int = 200
 ):
+def signup_test(
+    client: TestClient, username: str, password: str, response_code: int = 200
+):
     response = client.post(
         "/signup",
         data={"username": username, "password": password},
     )
+    assert response.status_code == response_code, response.json()
     assert response.status_code == response_code, response.json()
     return None
 
