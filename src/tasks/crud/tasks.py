@@ -1,3 +1,4 @@
+from uuid import UUID
 from src.tasks import models
 from src.exceptions import GeneralException
 from src.config import setup_logger
@@ -10,17 +11,17 @@ class TaskCRUD:
         self.db = session
         self.logger = setup_logger()
 
-    def get_user_tasks(self, user_id: int):
+    def get_user_tasks(self, user_id: UUID):
         return self.db.query(models.Task).filter(models.Task.owner_id == user_id).all()
 
-    def get_user_task_by_ID(self, user_id: int, task_id: int):
+    def get_user_task_by_ID(self, user_id: UUID, task_id: UUID):
         return (
             self.db.query(models.Task)
             .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
             .first()
         )
 
-    def create_task_for_user(self, user_id: int, task: str, description: str):
+    def create_task_for_user(self, user_id: UUID, task: str, description: str):
         try:
             db_task = models.Task(
                 task=task, description=description, owner_id=user_id
@@ -36,7 +37,7 @@ class TaskCRUD:
         finally:
             self.db.rollback()
 
-    def update_task(self, task_id: int, task: str, description: str = None): 
+    def update_task(self, task_id: UUID, task: str, description: str = None): 
         try:
             task_to_update = (
                 self.db.query(models.Task)
@@ -65,7 +66,7 @@ class TaskCRUD:
             self.db.rollback()
 
     def mark_as_complete(
-        self, task_id: int,
+        self, task_id: UUID,
         task: schemas.TaskComplete,
     ):
         try:
@@ -88,7 +89,7 @@ class TaskCRUD:
             self.db.rollback()
 
     def delete_task(
-        self, task_id: int, user_id: int,
+        self, task_id: UUID, user_id: UUID,
     ):
         task = (
             self.db.query(models.Task)
@@ -104,7 +105,7 @@ class TaskCRUD:
         self.db.commit()
         return total_user_tasks_to_delete
     
-    def total_tasks(self, user_id: int) -> int:  # type: ignore
+    def total_tasks(self, user_id: UUID) -> int:  # type: ignore
         query = self.db.query(models.Task)
         if user_id:
             query = query.filter(models.Task.owner_id == user_id)

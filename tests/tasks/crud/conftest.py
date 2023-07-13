@@ -1,9 +1,9 @@
 import pytest
 
 from src.tasks.crud.tasks import TaskCRUD
-from src.tasks.crud.users import UserCRUD
-from src.tasks.models import User
-from src.task.schemas import UserCreate
+from src.users.crud.users import UserCRUD
+from src.users.models import User
+from src.tasks.schemas import UserCreate
 
 
 @pytest.fixture()

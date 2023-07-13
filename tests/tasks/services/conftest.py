@@ -1,11 +1,11 @@
 import pytest
 
 from src.config import Settings, setup_logger
-from src.tasks.crud.users import UserCRUD
+from src.users.crud.users import UserCRUD
 from src.tasks.models import User
 from src.tasks.schemas import UserCreate
 from src.tasks.services.tasks import TaskService
-from src.tasks.services.users import UserService
+from src.users.services.users import UserService
 
 logger = setup_logger()
 

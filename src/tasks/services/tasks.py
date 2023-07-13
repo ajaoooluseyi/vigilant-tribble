@@ -1,7 +1,7 @@
 # from typing import Union
 
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from src.config import Settings, setup_logger
 from src.exceptions import (
     GeneralException,
@@ -62,7 +62,7 @@ class TaskService(BaseService):
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
 
-    def get_user_task_by_ID(self, task_id: int) -> ServiceResult[schemas.TaskOut]:
+    def get_user_task_by_ID(self, task_id: UUID) -> ServiceResult[schemas.TaskOut]:
         try:
             db_task = self.task_crud.get_user_task_by_ID(
                 user_id=self.requesting_user.id, task_id=task_id
@@ -76,7 +76,7 @@ class TaskService(BaseService):
             return failed_service_result(raised_exception)
 
     def update_task(
-        self, task_id: int, task: schemas.TaskUpdate
+        self, task_id: UUID, task: schemas.TaskUpdate
     ) -> ServiceResult[schemas.TaskOut]:
         try:
             db_task = self.task_crud.update_task(
@@ -95,7 +95,7 @@ class TaskService(BaseService):
 
     def mark_as_complete(
         self,
-        task_id: int,
+        task_id: UUID,
         task: schemas.TaskComplete,
     ) -> ServiceResult[schemas.TaskOut]:
         try:
@@ -110,7 +110,7 @@ class TaskService(BaseService):
 
     def delete_task(
         self,
-        task_id: int,
+        task_id: UUID,
     ) -> ServiceResult[int]:
         try:
             db_task = self.task_crud.delete_task(

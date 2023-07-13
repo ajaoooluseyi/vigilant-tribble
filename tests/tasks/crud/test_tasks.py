@@ -1,9 +1,9 @@
-from src.tasks.crud.tasks import TaskCRUD
-import uuid
-from src.tasks.schemas import TaskComplete
+from uuid import UUID
+
 from src.config import setup_logger
-from src.tasks.crud.users import UserCRUD
-from src.tasks.models import User, Task
+from src.tasks.crud.tasks import TaskCRUD
+from src.tasks.models import Task, User
+from src.tasks.schemas import TaskComplete
 
 logger = setup_logger()
 

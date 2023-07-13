@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Security
-
+from uuid import UUID
 from src.config import setup_logger
 from src.scopes import UserScope
 from src.service import handle_result, success_service_result
@@ -30,7 +30,7 @@ def get_user_tasks(
     response_model=schemas.TaskSchema,
 )
 def get_user_task_by_ID(
-    task_id: int,
+    task_id: UUID,
     task_service: TaskService = Security(
         get_current_active_user, scopes=[UserScope.READ.value]
     ),
@@ -58,7 +58,7 @@ def create_task_for_user(
     response_model=schemas.TaskSchema,
 )
 def update_task(
-    task_id: int,
+    task_id: UUID,
     task: schemas.TaskCreate,
     task_service: TaskService = Security(
         get_current_active_user, scopes=[UserScope.UPDATE.value]
@@ -73,7 +73,7 @@ def update_task(
     response_model=schemas.TaskSchema,
 )
 def mark_as_complete(
-    task_id: int,
+    task_id: UUID,
     task: schemas.TaskComplete,
     task_service: TaskService = Security(
         get_current_active_user, scopes=[UserScope.UPDATE.value]
@@ -85,7 +85,7 @@ def mark_as_complete(
 
 @router.delete("/user/task/{task_id}")
 def delete_task(
-    task_id: int,
+    task_id: UUID,
     task_service: TaskService = Security(
         get_current_active_user, scopes=[UserScope.DELETE.value]
     ),
