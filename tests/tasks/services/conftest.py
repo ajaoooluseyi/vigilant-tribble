@@ -1,10 +1,9 @@
 import pytest
 
+from src.config import Settings, setup_logger
 from src.tasks.crud.users import UserCRUD
 from src.tasks.models import User
 from src.tasks.schemas import UserCreate
-
-from src.config import Settings, setup_logger
 from src.tasks.services.tasks import TaskService
 from src.tasks.services.users import UserService
 
@@ -30,7 +29,7 @@ def user_service(test_db, test_user):
 @pytest.fixture()
 def task_service(test_db, test_user):
     if "task_service" in TEST_CACHE:
-        return TEST_CACHE["role_service"]
+        return TEST_CACHE["task_service"]
 
     task_service = TaskService(
         db=test_db, requesting_user=test_user, app_settings=Settings()

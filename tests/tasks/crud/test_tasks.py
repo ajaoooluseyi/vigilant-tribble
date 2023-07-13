@@ -1,67 +1,80 @@
-from src.tasks import config
-from src.tasks.crud.tasks import TasksCRUD
-from fastapi import status
+from src.tasks.crud.tasks import TaskCRUD
+import uuid
+from src.tasks.schemas import TaskComplete
+from src.config import setup_logger
+from src.tasks.crud.users import UserCRUD
+from src.tasks.models import User, Task
+
+logger = setup_logger()
+
+CUSTOM_task_TITLE = "Custom task"
 
 
-def test_create_task_for_user(test_db, crud_user):
-    
-    data = {"task": config.settings.TEST_TASK, "description": config.settings.TEST_DESC}
-    response = client.post("/user/task", json=data, headers=token_headers)
-    assert response.status_code == status.HTTP_201_CREATED
-    new_data = response.json()
-    assert new_data["task"] == config.settings.TEST_TASK
-    assert new_data["description"] == config.settings.TEST_DESC
+def test_get_user_tasks(task_crud: TaskCRUD, crud_user: User):
+    created_tasks = task_crud.get_user_tasks(
+        start=0,
+        limit=1,
+        user_id=(crud_user.id),
+    )
+    task_under_test = created_tasks[0]
+
+    task = task_crud.get_user_task_by_ID(task_id=task_under_test.id, user_id=(crud_user.id))  # type: ignore
+    assert isinstance(task, Task)
+    assert task_under_test == task
 
 
-def test_get_user_task_by_id(client, token_headers):
-    data = {"task": config.settings.TEST_TASK, "description": config.settings.TEST_DESC}
-    response = client.post("/user/task/", json=data, headers=token_headers)
+def test_get_user_task_by_ID(task_crud: TaskCRUD, crud_user: User):
+    created_tasks = task_crud.get_user_task_by_ID(
+        start=0,
+        limit=1,
+        user_id=(crud_user.id),
+    )
+    task_under_test = created_tasks
 
-    response = client.get("/user/task/1/", headers=token_headers)
-    assert response.status_code == status.HTTP_200_OK
-    new_data = response.json()
-    assert new_data["task"] == config.settings.TEST_TASK
-
-
-def test_get_user_tasks(client, token_headers):
-    data = {"task": config.settings.TEST_TASK, "description": config.settings.TEST_DESC}
-    client.post("/user/task/", json=data, headers=token_headers)
-    client.post("/user/task/", json=data, headers=token_headers)
-
-    response = client.get("/user/task", headers=token_headers)
-    assert response.status_code == status.HTTP_200_OK
-    new_data = response.json()
-    assert new_data[0]
-    assert new_data[1]
+    task = task_crud.get_user_task_by_ID(task_id=task_under_test.id, user_id=(crud_user.id))  # type: ignore
+    assert isinstance(task, Task)
+    assert task_under_test == task
 
 
-def test_update_task(client, token_headers):
-    data = {"task": config.settings.TEST_TASK, "description": config.settings.TEST_DESC}
-
-    client.post("/user/task/", json=data, headers=token_headers)
-    data["task"] = "new test task"
-    response = client.put("/user/task/1", json=data, headers=token_headers)
-    assert response.status_code == status.HTTP_202_ACCEPTED
-    new_data = response.json()
-    assert new_data["task"] == "new test task"
-    assert new_data["description"] == config.settings.TEST_DESC
-
-
-def test_mark_as_complete(client, token_headers):
-    data = {"task": config.settings.TEST_TASK, "description": config.settings.TEST_DESC}
-    client.post("/user/task/", json=data, headers=token_headers)
-
-    data["is_complete"] = True
-    response = client.post("/user/task/1", json=data, headers=token_headers)
-    assert response.status_code == status.HTTP_202_ACCEPTED
-    new_data = response.json()
-    assert new_data["is_complete"] == True
+def test_create_task_for_user(task_crud: TaskCRUD, crud_user: User):
+    task_under_test = "3@regnify.com"
+    description = "testdescription"
+    task: Task = task_crud.create_task_for_user(
+        task=task_under_test, description=description, owner_id=crud_user.id  # type: ignore
+    )
+    assert isinstance(task, Task)
+    assert task.username == task_under_test
+    assert task.description == description
 
 
-def test_delete_task(client, token_headers):
-    data = {"task": config.settings.TEST_TASK, "description": config.settings.TEST_DESC}
-    client.post("/user/task/", json=data, headers=token_headers)
+def test_update_task(task_crud: TaskCRUD, crud_user: User):
+    task_under_test = "3@regnify.com"
+    description = "testdescription"
+    maketask: Task = task_crud.create_task_for_user(
+        task=task_under_test, description=description, owner_id=crud_user.id  # type: ignore
+    )
+    task_id = maketask.task_id
+    task_update_test = "update@regnify.com"
+    updatedescription = "updatedescription"
+    task: Task = task_crud.update_task(
+        task=task_update_test,
+        description=updatedescription,
+        task_id=task_id,  # type: ignore
+    )
+    assert task.task == task_update_test
+    assert task.description == updatedescription
 
-    response = client.delete("/user/task/1", headers=token_headers)
-    response = client.get("/user/task/1", headers=token_headers)
-    assert response.status_code == 400
+
+def test_mark_complete(task_crud: TaskCRUD, crud_user: User):
+    task_under_test = "3@regnify.com"
+    description = "testdescription"
+    maketask: Task = task_crud.create_task_for_user(
+        task=task_under_test, description=description, owner_id=crud_user.id  # type: ignore
+    )
+
+    task_id = maketask.task_id
+    is_complete = True
+    task: Task = task_crud.mark_as_complete(
+        task_id=task_id, task=TaskComplete(is_complete)  # type: ignore
+    )
+    assert task.is_complete == is_complete

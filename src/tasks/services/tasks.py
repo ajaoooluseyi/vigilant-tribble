@@ -11,7 +11,7 @@ from src.service import (
     BaseService,
     ServiceResult,
     failed_service_result,
-    success_service_result
+    success_service_result,
 )
 from src.tasks import schemas
 from src.tasks.crud.tasks import TaskCRUD
@@ -35,7 +35,7 @@ class TaskService(BaseService):
     def create_task_for_user(
         self,
         taskdata: schemas.TaskCreate,
-    ):
+    ) -> ServiceResult[schemas.TaskOut]:
         try:
             new_task = self.task_crud.create_task_for_user(
                 user_id=self.requesting_user.id,
@@ -51,33 +51,44 @@ class TaskService(BaseService):
 
         #  return ServiceResult(data=new_task, success=True)
 
-    def get_user_tasks(self):
+    def get_user_tasks(self) -> ServiceResult[schemas.TaskOut]:
         try:
             db_tasks = self.task_crud.get_user_tasks(user_id=self.requesting_user.id)
 
-            return success_service_result(schemas.TaskOut.from_orm(db_tasks))  # return ServiceResult(data=db_tasks, success=True)
+            return success_service_result(
+                schemas.TaskOut.from_orm(db_tasks)
+            )  # return ServiceResult(data=db_tasks, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
 
-    def get_user_task_by_ID(self, task_id: int):
+    def get_user_task_by_ID(self, task_id: int) -> ServiceResult[schemas.TaskOut]:
         try:
             db_task = self.task_crud.get_user_task_by_ID(
                 user_id=self.requesting_user.id, task_id=task_id
             )
 
-            return success_service_result(schemas.TaskOut.from_orm(db_task))  # return ServiceResult(data=db_task, success=True)
+            return success_service_result(
+                schemas.TaskOut.from_orm(db_task)
+            )  # return ServiceResult(data=db_task, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
 
-    def update_task(self, task_id: int, task: schemas.TaskUpdate):
+    def update_task(
+        self, task_id: int, task: schemas.TaskUpdate
+    ) -> ServiceResult[schemas.TaskOut]:
         try:
             db_task = self.task_crud.update_task(
-                task_id=task_id, user_id=self.requesting_user.id, task=task.task, description=task.description
+                task_id=task_id,
+                user_id=self.requesting_user.id,
+                task=task.task,
+                description=task.description,
             )
 
-            return success_service_result(schemas.TaskOut.from_orm(db_task))  # return ServiceResult(data=db_task, success=True)
+            return success_service_result(
+                schemas.TaskOut.from_orm(db_task)
+            )  # return ServiceResult(data=db_task, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
@@ -86,13 +97,13 @@ class TaskService(BaseService):
         self,
         task_id: int,
         task: schemas.TaskComplete,
-    ):
+    ) -> ServiceResult[schemas.TaskOut]:
         try:
-            db_task = self.task_crud.mark_as_complete(
-                task_id=task_id, user_id=self.requesting_user.id, task=task
-            )
+            db_task = self.task_crud.mark_as_complete(task_id=task_id, task=task)
 
-            return success_service_result(schemas.TaskOut.from_orm(db_task))  # return ServiceResult(data=db_task, success=True)
+            return success_service_result(
+                schemas.TaskOut.from_orm(db_task)
+            )  # return ServiceResult(data=db_task, success=True)
         except Exception as raised_exception:
             self.logger.exception(raised_exception)
             return failed_service_result(raised_exception)
@@ -100,7 +111,7 @@ class TaskService(BaseService):
     def delete_task(
         self,
         task_id: int,
-    ):
+    ) -> ServiceResult[int]:
         try:
             db_task = self.task_crud.delete_task(
                 task_id=task_id, user_id=self.requesting_user.id

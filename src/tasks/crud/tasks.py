@@ -20,10 +20,10 @@ class TaskCRUD:
             .first()
         )
 
-    def create_task_for_user(self, user_id: int, task: schemas.TaskCreate):
+    def create_task_for_user(self, user_id: int, task: str, description: str):
         try:
             db_task = models.Task(
-                task=task.task, description=task.description, owner_id=user_id
+                task=task, description=description, owner_id=user_id
             )
             self.db.add(db_task)
             self.db.commit()
@@ -36,13 +36,16 @@ class TaskCRUD:
         finally:
             self.db.rollback()
 
-    def update_task(self, task_id: int, user_id: int, task: str, description: str = None )-> models.Task: 
+    def update_task(self, task_id: int, task: str, description: str = None): 
         try:
             task_to_update = (
                 self.db.query(models.Task)
-                .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
+                .filter(models.Task.id == task_id)
                 .first()
             )
+            if not task_to_update:
+                raise GeneralException("Task does not exist")
+            
             if task:
                 setattr(task_to_update, "task", task)
 
@@ -62,13 +65,13 @@ class TaskCRUD:
             self.db.rollback()
 
     def mark_as_complete(
-        self, task_id: int, user_id: int,
+        self, task_id: int,
         task: schemas.TaskComplete,
     ):
         try:
             task_to_update = (
                 self.db.query(models.Task)
-                .filter(models.Task.owner_id == user_id, models.Task.id == task_id)
+                .filter(models.Task.id == task_id)
                 .first()
             )
 
@@ -96,13 +99,9 @@ class TaskCRUD:
         if task is None:
             raise GeneralException("The task does not exist.")
         total_user_tasks_to_delete = (
-            self.db.query(models.Task)
-            .filter(models.Task.owner_id_id == user_id)
-            .delete()
+           self.db.delete(task)
         )
-        self.db.delete(task)
         self.db.commit()
-        self.db.close()
         return total_user_tasks_to_delete
     
     def total_tasks(self, user_id: int) -> int:  # type: ignore

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Security
 
 from src.config import setup_logger
 from src.scopes import UserScope
-from src.service import handle_result
+from src.service import handle_result, success_service_result
 from src.tasks.services.tasks import TaskService
 from src.tasks.dependencies import get_current_active_user
 from src.tasks import schemas
@@ -91,4 +91,6 @@ def delete_task(
     ),
 ):
     result = task_service.delete_task(task_id)
-    return handle_result(result)  # type: ignore
+    if result.success:
+        return handle_result(success_service_result("Task deleted sucessfully"))  # type: ignore
+    return handle_result(result)

@@ -1,9 +1,9 @@
 """Pydantic Models"""
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 
 
 class TaskBase(BaseModel):
-    task: str
+    task: constr(min_length=3)  # type: ignore
     description: str = None
 
 
