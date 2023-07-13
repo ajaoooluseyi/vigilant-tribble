@@ -49,13 +49,18 @@ def test_create_task_for_user(task_crud: TaskCRUD, crud_user: User):
 
 
 def test_update_task(task_crud: TaskCRUD, crud_user: User):
-    task_update_test = "3@regnify.com"
-    description = "updatedescription"
-    task: Task = task_crud.update_task(
-        TaskUpdate(task=task_update_test,  description=description, owner_id=crud_user.id)  # type: ignore
+    task_under_test = "3@regnify.com"
+    description = "testdescription"
+    maketask: Task = task_crud.create_task_for_user(
+        TaskCreate(task=task_under_test,  description=description, owner_id=crud_user.id)  # type: ignore
     )
-    assert task.username == task_update_test
-    assert task.description == description
+    task_update_test = "update@regnify.com"
+    updatedescription = "updatedescription"
+    task: Task = task_crud.update_task(
+        TaskUpdate(task=task_update_test,  description=updatedescription, owner_id=crud_user.id)  # type: ignore
+    )
+    assert task.task == task_update_test
+    assert task.description == updatedescription
 
 
 def test_mark_complete(task_crud: TaskCRUD, crud_user: User):
@@ -63,7 +68,5 @@ def test_mark_complete(task_crud: TaskCRUD, crud_user: User):
     task: Task = task_crud.mark_complete(
         TaskUpdate(task=is_complete,  task_id=, owner_id=crud_user.id)  # type: ignore
     )
-    assert task.username == task_update_test
-    assert task.description == description
-
+    assert task.is_complete == is_complete
 
