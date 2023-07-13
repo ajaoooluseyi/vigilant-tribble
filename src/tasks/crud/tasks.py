@@ -96,13 +96,9 @@ class TaskCRUD:
         if task is None:
             raise GeneralException("The task does not exist.")
         total_user_tasks_to_delete = (
-            self.db.query(models.Task)
-            .filter(models.Task.owner_id_id == user_id)
-            .delete()
-        )
-        self.db.delete(task)
-        self.db.commit()
-        self.db.close()
+           self.db.delete(task)
+        )    
+
         return total_user_tasks_to_delete
     
     def total_tasks(self, user_id: int) -> int:  # type: ignore
