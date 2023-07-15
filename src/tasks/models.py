@@ -1,9 +1,8 @@
 """Contains the DB modules"""
 import uuid
-from .dependencies import Base
+from src.database import Base
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
-from src.users.models import User
 
 
 class Task(Base):

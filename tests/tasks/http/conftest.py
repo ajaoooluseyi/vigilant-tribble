@@ -5,8 +5,6 @@ from fastapi.testclient import TestClient
 from src.main import app
 from src.tasks.crud.users import UserCRUD
 from src.tasks.schemas import UserCreate
-from src.tasks.crud.users import UserCRUD
-from src.tasks.schemas import UserCreate
 
 TEST_CACHE = {}
 test_password = "testpass"
@@ -21,11 +19,11 @@ def client():
 
 
 def login_test(
-    client: TestClient, username: str, password: str, response_code: int = 200
+    client: TestClient, email: str, password: str, response_code: int = 200
 ):
     response = client.post(
         "/login",
-        data={"username": username, "password": password},
+        data={"email": email, "password": password},
     )
     assert response.status_code == response_code, response.json()
     if response.status_code == 200:
@@ -36,14 +34,12 @@ def login_test(
 
 
 def signup_test(
-    client: TestClient, username: str, password: str, response_code: int = 200
+    client: TestClient, email: str, password: str, response_code: int = 200
 ):
-def signup_test(
-    client: TestClient, username: str, password: str, response_code: int = 200
-):
+
     response = client.post(
         "/signup",
-        data={"username": username, "password": password},
+        data={"email": email, "password": password},
     )
     assert response.status_code == response_code, response.json()
     assert response.status_code == response_code, response.json()
@@ -52,20 +48,20 @@ def signup_test(
 
 @pytest.fixture()
 def test_admin_user(
-    client: TestClient, test_db, test_password: str, test_username: str
+    client: TestClient, test_db, test_password: str, test_email: str
 ) -> dict:
-    if "test_username" in TEST_CACHE:
-        return TEST_CACHE["test_username"]
+    if "test_email" in TEST_CACHE:
+        return TEST_CACHE["test_email"]
 
     user_crud = UserCRUD(db=test_db)
     user_created = user_crud.create_user(
         UserCreate(
             is_super_admin=True,
-            username=test_username,  # type: ignore
+            email=test_email,  # type: ignore
             password=test_password,
         ),
     )
-    assert user_created.username == test_username
+    assert user_created.email == test_email
 
 
 @pytest.fixture()
@@ -73,7 +69,7 @@ def test_admin_user_headers(
     client: TestClient, admin_user=test_admin_user
 ):
     response = client.post(
-        "/login", data={"username": admin_user.username, "password": test_password}
+        "/login", data={"email": admin_user.email, "password": test_password}
     )
     assert response.status_code == 200, response.json()
     bToken = response.json()["access_token"]

@@ -35,7 +35,7 @@ class TaskOut(TaskSchema):
 
 
 class UserBase(BaseModel):
-    username: str
+    email: str
 
 
 class UserCreate(UserBase):
@@ -43,7 +43,7 @@ class UserCreate(UserBase):
 
 
 class UserSchema(BaseModel):
-    username: str
+    email: str
     id: int
     is_active: bool
     tasks: list[TaskSchema]
@@ -58,4 +58,4 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str = None
+    email: str = None

@@ -28,10 +28,10 @@ def crud_username_2():
 @pytest.fixture()
 def crud_user(test_db, crud_username) -> User:
     users_crud: UserCRUD = UserCRUD(db=test_db)
-    user: User = users_crud.get_user(crud_username)
+    user: User = users_crud.get_user_by_email(crud_username)
     if not user:
         user: User = users_crud.create_user(
-            UserCreate(username=crud_username,  password="3")  # type: ignore
+            UserCreate(email=crud_username,  password="3")  # type: ignore
         )
     return user
 

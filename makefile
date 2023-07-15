@@ -165,6 +165,48 @@ run-test-roles-http:
 
 	make kill-test
 
+run-test-tasks:
+	make kill-test
+
+	make run-test-migrations
+
+	# * run the tests
+	docker compose -f docker/test/docker-compose-test.yml run -v ./:/usr/src/regnify-api  --rm regnify-api python -m pytest --cov-report term-missing --cov=src/tasks tests/tasks 
+
+	make kill-test
+
+run-test-tasks-crud:
+	make kill-test
+
+	make run-test-migrations
+	
+	# * run the tests
+	docker compose -f docker/test/docker-compose-test.yml run -v ./:/usr/src/regnify-api  --rm regnify-api python -m pytest --cov-report term-missing --cov=src/tasks tests/tasks/crud/test_tasks.py
+
+	make kill-test
+
+run-test-tasks-services:
+	make kill-test
+
+	make run-test-migrations
+	
+	# * run the tests
+	docker compose -f docker/test/docker-compose-test.yml run -v ./:/usr/src/regnify-api --rm regnify-api python -m pytest --cov-report term-missing --cov=src/tasks/services tests/tasks/services/test_tasks.py
+
+	make kill-test
+
+
+run-test-tasks-http:
+	make kill-test
+
+	make run-test-migrations
+	
+	# * run the tests
+	docker compose -f docker/test/docker-compose-test.yml run -v ./:/usr/src/regnify-api --rm regnify-api python -m pytest --cov-report term-missing --cov=src/tasks/routers tests/tasks/http/test_tasks.py
+
+	make kill-test
+
+
 # * ------ End User Modules ------ * #
 
 

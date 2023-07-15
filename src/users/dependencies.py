@@ -47,6 +47,7 @@ def can_read_all_users(current_user: UserOut = Depends(get_current_active_user))
         )
 
 
+
 def initiate_user_service(
     current_user: UserOut = Depends(get_current_active_user),
     db: Session = Depends(get_db_sess),

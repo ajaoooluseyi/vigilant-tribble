@@ -77,6 +77,10 @@ make run-tests
 make run-test-users
 ```
 
+```sh
+# Run all the tests in the tasks module
+make run-test-tasks
+```
 
 # Serving HTTP/1.1 and HTTP/2.0
 Ensure you have these saved in the environment variables

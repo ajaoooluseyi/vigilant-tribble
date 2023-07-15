@@ -45,11 +45,11 @@ def test_user(test_db):
     user_under_test = "simpleUser@regnify.com"
 
     users_crud: UserCRUD = UserCRUD(session=test_db)
-    if users_crud.get_user(user_under_test):
-        return users_crud.get_user(user_under_test)
+    if users_crud.get_user_by_email(user_under_test):
+        return users_crud.get_user_by_email(user_under_test)
 
     user: User = users_crud.create_user(
-        UserCreate(username=user_under_test, password="3")  # type: ignore
+        UserCreate(email=user_under_test, password="3")  # type: ignore
     )
-    assert user.username == user_under_test
+    assert user.email == user_under_test
     return user

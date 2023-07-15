@@ -18,7 +18,6 @@ from sqlalchemy.sql.functions import func
 from src.database import Base
 from src.models import FileObject
 from src.scopes import ProfileScope, RoleScope, UserScope
-from src.tasks.models import Task
 
 
 class User(Base):
@@ -28,8 +27,8 @@ class User(Base):
         postgresql.UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
     )
 
-    email = Column(String, unique=True, index=True)
-    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)             
+    # username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
 
@@ -43,7 +42,6 @@ class User(Base):
     profile = relationship("Profile", back_populates="user", lazy="joined")
 
     user_roles = relationship("UserRoles", back_populates="user")
-    tasks = relationship("Task", back_populates="owner")
 
     last_password_token = Column(String, default="")
 

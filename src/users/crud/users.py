@@ -7,7 +7,6 @@ from src.security import get_password_hash
 from src.users import models, schemas
 from src.users.config import get_default_avatar_url
 from src.users.exceptions import ProfileNotFoundException, UserNotFoundException
-from src.tasks.models import User as TaskUser
 from sqlalchemy.exc import IntegrityError
 
 
@@ -18,10 +17,6 @@ class UserCRUD:
 
     def get_user(self, user_id: UUID) -> Union[models.User, None]:
         return self.db.query(models.User).filter(models.User.id == user_id).first()  # type: ignore
-
-    def get_user_for_task(self, user_id: int) -> Union[TaskUser, None]:
-        return self.db.query(TaskUser).filter(TaskUser.id == user_id).first()  # type: ignore
-
 
     def get_user_by_email(self, email: str) -> models.User:
         return self.db.query(models.User).filter(models.User.email == email).first()  # type: ignore

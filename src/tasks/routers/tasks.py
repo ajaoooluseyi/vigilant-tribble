@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Security
 from uuid import UUID
 from src.config import setup_logger
-from src.scopes import UserScope
 from src.service import handle_result, success_service_result
 from src.tasks.services.tasks import TaskService
-from src.tasks.dependencies import get_current_active_user
+from src.tasks.dependencies import initiate_task_service
 from src.tasks import schemas
 
 router = APIRouter(tags=["Tasks"], prefix="/tasks")
@@ -18,9 +17,9 @@ logger = setup_logger()
 )
 def get_user_tasks(
     task_service: TaskService = Security(
-        get_current_active_user, scopes=[UserScope.READ.value]
+        initiate_task_service, scopes=[]
     ),
-):
+): 
     task = task_service.get_user_tasks()
     return handle_result(task, list[schemas.TaskSchema])  # type: ignore
 
@@ -32,7 +31,7 @@ def get_user_tasks(
 def get_user_task_by_ID(
     task_id: UUID,
     task_service: TaskService = Security(
-        get_current_active_user, scopes=[UserScope.READ.value]
+        initiate_task_service, scopes=[]
     ),
 ):
     task = task_service.get_user_task_by_ID(task_id=task_id)
@@ -46,7 +45,7 @@ def get_user_task_by_ID(
 def create_task_for_user(
     task: schemas.TaskCreate,
     task_service: TaskService = Security(
-        get_current_active_user, scopes=[UserScope.CREATE.value]
+        initiate_task_service, scopes=[]
     ),
 ):
     task = task_service.create_task_for_user(task)  # type: ignore
@@ -61,7 +60,7 @@ def update_task(
     task_id: UUID,
     task: schemas.TaskCreate,
     task_service: TaskService = Security(
-        get_current_active_user, scopes=[UserScope.UPDATE.value]
+        initiate_task_service, scopes=[]
     ),
 ):
     task = task_service.update_task(task=task, task_id=task_id)  # type: ignore
@@ -76,7 +75,7 @@ def mark_as_complete(
     task_id: UUID,
     task: schemas.TaskComplete,
     task_service: TaskService = Security(
-        get_current_active_user, scopes=[UserScope.UPDATE.value]
+        initiate_task_service, scopes=[]
     ),
 ):
     task = task_service.mark_as_complete(task_id, task)  # type: ignore
@@ -87,7 +86,7 @@ def mark_as_complete(
 def delete_task(
     task_id: UUID,
     task_service: TaskService = Security(
-        get_current_active_user, scopes=[UserScope.DELETE.value]
+        initiate_task_service, scopes=[]
     ),
 ):
     result = task_service.delete_task(task_id)
