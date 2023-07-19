@@ -33,7 +33,7 @@ Features
 Open the makefile and understand the file before running the makefile commands.
 
 ```sh
-# Run this first, Create Network for the containers
+# Run this first, Create Network for the containersmakemake 
 make create-network
 ```
 
@@ -51,7 +51,7 @@ make run
 # Follow docker compose logs
 make follow-logs
 ```
-
+cd
 ```sh
 # Kill the API
 make kill-local

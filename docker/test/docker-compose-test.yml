@@ -5,10 +5,10 @@ services:
   regnify-api:
     container_name: regnify-api
     image: regnify-api
-    build: 
+    build:
       context: ../../
       dockerfile: docker/Dockerfile
-    
+
     command: hypercorn src.main:app --reload --bind 0.0.0.0:8100
     volumes:
       - ./../../:/usr/src/regnify-api
@@ -33,10 +33,10 @@ services:
       - ADMIN_FIRST_NAME=Gabriel
       - ADMIN_LAST_NAME=Doe
       - ADMIN_PASSWORD=worldSecret
-      
+
       - ALLOW_ORIGINS=http://localhost,http://localhost:8000
       - ALLOW_ORIGIN_REGEX=https://.*\\.regnify\\.com|https://.*\\.azurestaticapps\\.net|https://.*\\.netlify\\.app
-      
+
       - DOC_URL=/docs
       - REDOC_URL=/redoc
 
@@ -46,7 +46,7 @@ services:
       - SECRET_KEY_FOR_TOKENS=cb94625cb1bb612f382145c2a57c5
 
       - ALGORITHM=HS256
-      
+
       - DEFAULT_AVATAR_URL=https://via.placeholder.com/500
 
       - DB_USER=regnify1234
@@ -64,13 +64,11 @@ services:
       - MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F # for play.min.io
       - MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG # for play.min.io
       - SECURE_MINIO=False
-  
 
     depends_on:
       - postgres
       - mailhog
       - regnify-minio
-
 
   regnify-minio:
     container_name: regnify-minio
@@ -90,7 +88,7 @@ services:
     container_name: regnify-postgres
     restart: always
     ports:
-      - 5433:5432
+      - 5432:5432
     environment:
       POSTGRES_USER: regnify1234
       POSTGRES_PASSWORD: REGNIFY885
@@ -100,7 +98,7 @@ services:
     image: mailhog/mailhog:v1.0.1
     container_name: regnify-mail-server
     logging:
-      driver: 'none'  # disable saving logs
+      driver: 'none' # disable saving logs
     ports:
       - 8025:8025
 
