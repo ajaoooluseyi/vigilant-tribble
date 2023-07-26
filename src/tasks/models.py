@@ -10,11 +10,14 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(
-        Integer, primary_key=True, index=True, default=uuid.uuid4
+        Integer,
+        primary_key=True,
+        index=True,
+        autoincrement="auto",
     )
     task = Column(String, index=True)
     description = Column(String, index=True)
     is_complete = Column(Boolean, default=False)
     owner_id = Column(postgresql.UUID(as_uuid=True), ForeignKey("users.id"))
 
-    owner = relationship("User", back_populates="tasks")
+    owner = relationship("User")

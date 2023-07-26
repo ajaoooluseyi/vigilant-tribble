@@ -1,5 +1,6 @@
 """Pydantic Models"""
 from pydantic import BaseModel, constr
+from src.schemas import ParentPydanticModel
 
 
 class TaskBase(BaseModel):
@@ -32,6 +33,13 @@ class TaskSchema(BaseModel):
 
 class TaskOut(TaskSchema):
     pass
+
+
+class ManyTaskOut(ParentPydanticModel):
+    tasks: list[TaskSchema]
+
+    class Config:
+        orm_mode = True
 
 
 class UserBase(BaseModel):

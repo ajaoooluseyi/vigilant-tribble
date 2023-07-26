@@ -13,15 +13,13 @@ logger = setup_logger()
 
 @router.get(
     "/user/task",
-    response_model=list[schemas.TaskSchema],
+    response_model=schemas.ManyTaskOut,
 )
 def get_user_tasks(
-    task_service: TaskService = Security(
-        initiate_task_service, scopes=[]
-    ),
-): 
+    task_service: TaskService = Security(initiate_task_service, scopes=[]),
+):
     task = task_service.get_user_tasks()
-    return handle_result(task, list[schemas.TaskSchema])  # type: ignore
+    return handle_result(task, schemas.ManyTaskOut)  # type: ignore
 
 
 @router.get(
@@ -29,10 +27,8 @@ def get_user_tasks(
     response_model=schemas.TaskSchema,
 )
 def get_user_task_by_ID(
-    task_id: UUID,
-    task_service: TaskService = Security(
-        initiate_task_service, scopes=[]
-    ),
+    task_id: int,
+    task_service: TaskService = Security(initiate_task_service, scopes=[]),
 ):
     task = task_service.get_user_task_by_ID(task_id=task_id)
     return handle_result(task, schemas.TaskSchema)  # type: ignore
@@ -44,9 +40,7 @@ def get_user_task_by_ID(
 )
 def create_task_for_user(
     task: schemas.TaskCreate,
-    task_service: TaskService = Security(
-        initiate_task_service, scopes=[]
-    ),
+    task_service: TaskService = Security(initiate_task_service, scopes=[]),
 ):
     task = task_service.create_task_for_user(task)  # type: ignore
     return handle_result(task, schemas.TaskSchema)  # type: ignore
@@ -57,11 +51,9 @@ def create_task_for_user(
     response_model=schemas.TaskSchema,
 )
 def update_task(
-    task_id: UUID,
+    task_id: int,
     task: schemas.TaskCreate,
-    task_service: TaskService = Security(
-        initiate_task_service, scopes=[]
-    ),
+    task_service: TaskService = Security(initiate_task_service, scopes=[]),
 ):
     task = task_service.update_task(task=task, task_id=task_id)  # type: ignore
     return handle_result(task, schemas.TaskSchema)  # type: ignore
@@ -72,11 +64,9 @@ def update_task(
     response_model=schemas.TaskSchema,
 )
 def mark_as_complete(
-    task_id: UUID,
+    task_id: int,
     task: schemas.TaskComplete,
-    task_service: TaskService = Security(
-        initiate_task_service, scopes=[]
-    ),
+    task_service: TaskService = Security(initiate_task_service, scopes=[]),
 ):
     task = task_service.mark_as_complete(task_id, task)  # type: ignore
     return handle_result(task, schemas.TaskSchema)  # type: ignore
@@ -84,10 +74,8 @@ def mark_as_complete(
 
 @router.delete("/user/task/{task_id}")
 def delete_task(
-    task_id: UUID,
-    task_service: TaskService = Security(
-        initiate_task_service, scopes=[]
-    ),
+    task_id: int,
+    task_service: TaskService = Security(initiate_task_service, scopes=[]),
 ):
     result = task_service.delete_task(task_id)
     if result.success:

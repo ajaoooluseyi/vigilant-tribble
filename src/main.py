@@ -11,6 +11,7 @@ from src.users import models
 from src.database import engine
 from src.users.routers.users import router as user_router
 from src.users.routers.roles import router as role_router
+from src.tasks.routers.tasks import router as task_router
 from src.config import setup_logger
 from src.service import custom_openapi_with_scopes, get_settings
 from src.database import open_db_connections, close_db_connections
@@ -41,6 +42,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(role_router)
 app.include_router(user_router)
+app.include_router(task_router)
 
 simplify_operation_ids(app)
 
